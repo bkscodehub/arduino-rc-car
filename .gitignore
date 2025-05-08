@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Python virtual environments
+venv/
+env/
+.venv/
+
+# Log and data files
+*.log
+*.csv
+*.json
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# VSCode or other IDE configs
+.vscode/
+.idea/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# Output media (optional)
+#media/*.gif
+media/*.mp4
+
+# Arduino build artifacts (optional)
+*.hex
+*.elf
+
+# Ignore backup files
+*~
+*.bak
