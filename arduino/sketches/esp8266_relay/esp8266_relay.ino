@@ -1,13 +1,40 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <time.h>          // For NTP
 
-const char* ssid = "<WIFI SSID>";
-const char* password = "<WIFI PASSWORD>";
+#ifndef WIFI_SSID
+#define WIFI_SSID "DEFAULT_SSID"
+#endif
 
-const char* mqtt_server = "<HiveMQ MQTT BROKER HOST URL>";
-const int mqtt_port = 8883;
-const char* mqtt_user = "<HiveMQ USERID>";
-const char* mqtt_password = "<HiveMQ PASSWORD>";
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "DEFAULT_PASSWORD"
+#endif
+
+#ifndef HIVEMQ_USERNAME
+#define HIVEMQ_USERNAME "DEFAULT_HIVEMQ_USERID"
+#endif
+
+#ifndef HIVEMQ_PASSWORD
+#define HIVEMQ_PASSWORD "DEFAULT_HIVEMQ_PASSWORD"
+#endif
+
+#ifndef HIVEMQ_BROKER_URL
+#define HIVEMQ_BROKER_URL "DEFAULT_HIVEMQ_BROKER_URL"
+#endif
+
+#ifndef HIVEMQ_BROKER_PORT
+#define HIVEMQ_BROKER_PORT 0
+#endif
+
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
+
+// SoftwareSerial espToArduino(2, 3); // RX, TX (to Arduino TX, RX)
+
+const char* mqtt_server = HIVEMQ_BROKER_URL;
+const int mqtt_port = HIVEMQ_BROKER_PORT;
+const char* mqtt_user = HIVEMQ_USERNAME;
+const char* mqtt_password = HIVEMQ_PASSWORD;
 
 BearSSL::WiFiClientSecure espClient;
 PubSubClient client(espClient);
@@ -67,14 +94,24 @@ void setClock() {
 
 #define COMMAND_TOPIC "car/command"
 #define TELEMETRY_TOPIC "car/telemetry"
+#define STATUS_TOPIC "car/status"
+
+unsigned long lastHeartbeat = 0;
+const unsigned long HEARTBEAT_INTERVAL = 60000; // 60 seconds
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  String msg;
-  for (int i = 0; i < length; i++) msg += (char)payload[i];
-  Serial.print("Command from MQTT: ");
-  Serial.println(msg);
-  Serial.print(">>");
-  Serial.println(msg); // Pass to Arduino via serial
+  String topicStr = String(topic);
+
+  if (topicStr == COMMAND_TOPIC) {
+    String msg;
+    for (int i = 0; i < length; i++) msg += (char)payload[i];
+    Serial.print("Command from MQTT: ");
+    Serial.println(msg);
+    Serial.print(">");
+    Serial.println(msg); // Pass to Arduino via serial
+    // espToArduino.print(">");
+    // espToArduino.println(msg); // Pass to Arduino via serial
+  }
 }
 
 void setup_wifi() {
@@ -83,7 +120,6 @@ void setup_wifi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   // WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, IPAddress(8,8,8,8)); // Use Google's DNS
-  WiFi.begin(ssid, password);
   
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -102,12 +138,13 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
 
     // MQTT client ID
-    String clientId = "ESP8266Client";
+    String clientId = "ESP8266Client-" + String(ESP.getChipId());
     if (client.connect(clientId.c_str(), mqtt_user, mqtt_password)) {
       Serial.println("connected");
 
       client.subscribe(COMMAND_TOPIC);
       Serial.println("MQTT subscribed.");
+      client.publish(STATUS_TOPIC, "connected");
     } else {
       Serial.print("MQTT connection failed, rc=");
       Serial.println(client.state());
@@ -121,7 +158,9 @@ void reconnect() {
 }
 
 void setup() {
-  Serial.begin(9600); // Connection to Arduino
+  Serial.begin(9600);
+  // espToArduino.begin(9600); // Connection to Arduino
+  
   BearSSL::X509List *serverTrustedCA = new BearSSL::X509List(ca_cert);
   espClient.setTrustAnchors(serverTrustedCA);
   setup_wifi();
@@ -133,6 +172,24 @@ void setup() {
 void loop() {
   if (!client.connected()) reconnect();
   client.loop();
+
+  //Car Heartbeat
+  if (millis() - lastHeartbeat > HEARTBEAT_INTERVAL) {
+    lastHeartbeat = millis();
+    time_t now = time(nullptr);
+    struct tm timeinfo;
+    gmtime_r(&now, &timeinfo);
+    
+    char timeBuffer[32];
+    strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
+    
+    String heartbeat = String("{\"status\":\"alive\",") +
+                       "\"timestamp\":\"" + timeBuffer + "\"," +
+                       "\"ip\":\"" + WiFi.localIP().toString() + "\"," +
+                       "\"rssi\":" + String(WiFi.RSSI()) + "}";
+                       
+    client.publish(STATUS_TOPIC, heartbeat.c_str());
+  }
 
   // Read serial from Arduino (e.g., {"1":25})
   if (Serial.available()) {

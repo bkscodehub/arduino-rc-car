@@ -1,0 +1,48 @@
+name: Build All ESP8266 Sketches Securely
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      WIFI_SSID: ${{ secrets.WIFI_SSID }}
+      WIFI_PASSWORD: ${{ secrets.WIFI_PASSWORD }}
+      HIVEMQ_BROKER_URL: ${{ secrets.HIVEMQ_BROKER_URL }}
+      HIVEMQ_BROKER_PORT: ${{ secrets.HIVEMQ_BROKER_PORT }}
+      HIVEMQ_USERNAME: ${{ secrets.HIVEMQ_USERNAME }}
+      HIVEMQ_PASSWORD: ${{ secrets.HIVEMQ_PASSWORD }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Arduino CLI
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+        ./bin/arduino-cli core update-index
+        ./bin/arduino-cli core install esp8266:esp8266
+
+    - name: Compile all sketches with injected secrets
+      run: |
+        mkdir -p build
+        for sketch in arduino/sketches/*/*.ino; do
+          sketch_name=$(basename "$sketch" .ino)
+          echo "🔧 Compiling $sketch_name..."
+          ./bin/arduino-cli compile \
+            --fqbn esp8266:esp8266:nodemcuv2 \
+            --build-property build.extra_flags="-DWIFI_SSID=\\\"${WIFI_SSID}\\\" -DWIFI_PASSWORD=\\\"${WIFI_PASSWORD}\\\" -DHIVEMQ_BROKER_URL=\\\"${HIVEMQ_BROKER_URL}\\\" -DHIVEMQ_BROKER_PORT=${HIVEMQ_BROKER_PORT} -DHIVEMQ_USERNAME=\\\"${HIVEMQ_USERNAME}\\\" -DHIVEMQ_PASSWORD=\\\"${HIVEMQ_PASSWORD}\\\"" \
+            --output-dir build/$sketch_name \
+            "$sketch"
+        done
+
+    - name: Upload compiled firmware binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware
+        path: build/**/**/*.bin

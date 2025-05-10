@@ -1,7 +1,15 @@
 #include <ESP8266WiFi.h>
 
-const char* ssid = "<WIFI SSID>";
-const char* password = "<WIFI PASSWORD>";
+#ifndef WIFI_SSID
+#define WIFI_SSID "DEFAULT_SSID"
+#endif
+
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "DEFAULT_PASSWORD"
+#endif
+
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 WiFiServer server(80);
 

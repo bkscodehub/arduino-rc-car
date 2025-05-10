@@ -2,8 +2,10 @@
 
 #define LEFT_MOTOR_PIN1 8
 #define LEFT_MOTOR_PIN2 9
+#define LEFT_MOTOR_ENA_PIN 5 // ENA on L298N
 #define RIGHT_MOTOR_PIN1 10
 #define RIGHT_MOTOR_PIN2 11
+#define RIGHT_MOTOR_ENB_PIN 6 //ENB on L298N
 #define TRIG_PIN 4
 #define ECHO_PIN 5
 #define SENSOR_ID 1 // Ultrasound sensor Id
@@ -13,19 +15,33 @@ SoftwareSerial espSerial(2, 3); // RX, TX
 unsigned long lastSensorTime = 0;
 
 void setup() {
-  espSerial.begin(9600);
   pinMode(LEFT_MOTOR_PIN1, OUTPUT);
   pinMode(LEFT_MOTOR_PIN2, OUTPUT);
+  pinMode(LEFT_MOTOR_ENA_PIN, OUTPUT); // ENA on L298N for speed adjustment
   pinMode(RIGHT_MOTOR_PIN1, OUTPUT);
   pinMode(RIGHT_MOTOR_PIN2, OUTPUT);
+  pinMode(RIGHT_MOTOR_ENB_PIN, OUTPUT); // ENB on L298N for speed adjustment
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
+  
+  analogWrite(LEFT_MOTOR_ENA_PIN, 127);
+  analogWrite(RIGHT_MOTOR_ENB_PIN, 127);
+
+  stopMotors();
+
+  Serial.begin(9600);
+  espSerial.begin(9600);
 }
 
 void loop() {
   if (espSerial.available()) {
-    char cmd = espSerial.read();
-    drive(cmd);
+    String line = espSerial.readStringUntil('\n');
+    Serial.println(line);
+    if (line.startsWith(">")) {
+      char cmd = line.charAt(1);  // Get the character after '>'
+      // Process command
+      drive(cmd);
+    }
   }
 
   // Send sensor data every 1s
@@ -40,6 +56,7 @@ void loop() {
   }
 }
 void drive(char cmd) {
+  Serial.println(cmd);
   switch (cmd) {
     case 'F': // Forward
       forward();
@@ -54,6 +71,9 @@ void drive(char cmd) {
       turnRight();
       break;
     case 'S': // Stop
+      stopMotors();
+      break;
+    default: // Stop
       stopMotors();
       break;
   }
@@ -90,7 +110,7 @@ void turnLeft() {
   digitalWrite(RIGHT_MOTOR_PIN1, HIGH);
   digitalWrite(RIGHT_MOTOR_PIN2, LOW);  // Right motors forward
   
-  delay(500); // stop after turning
+  delay(750); // stop after turning
   stopMotors();
 }
 
@@ -100,7 +120,7 @@ void turnRight() {
   digitalWrite(RIGHT_MOTOR_PIN1, LOW);
   digitalWrite(RIGHT_MOTOR_PIN2, HIGH); // Right motors reverse
 
-  delay(500); // stop after turning
+  delay(750); // stop after turning
   stopMotors();
 }
 
