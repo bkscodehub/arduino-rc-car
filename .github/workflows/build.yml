@@ -25,7 +25,7 @@ jobs:
     - name: Set up Arduino CLI
       uses: arduino/setup-arduino-cli@v1
       with:
-        version: latest
+        version: 0.35.2
 
     - name: Install ESP8266 Core
       run: |
