@@ -39,6 +39,7 @@ media/*.mp4
 # Arduino build artifacts (optional)
 *.hex
 *.elf
+flash/
 
 # Ignore backup files
 *~
