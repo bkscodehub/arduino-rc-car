@@ -35,6 +35,10 @@ jobs:
         arduino-cli core update-index
         arduino-cli core install esp8266:esp8266
 
+    - name: Install dependencies
+      run: |
+        arduino-cli lib install "PubSubClient"
+
     - name: Verify ESP8266 Installation
       run: arduino-cli core list
 
