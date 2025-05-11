@@ -6,6 +6,8 @@ const int IN4 = 11;
 const int TRIGGER_PIN = 6;
 const int ECHO_PIN = 7;
 
+long distance = 0;
+
 void setup() {
   // Set motor control pins as output
   pinMode(IN1, OUTPUT);
@@ -16,22 +18,23 @@ void setup() {
 
 void loop() {
 
-  long getDistance(int TRIGGER_PIN, int ECHO_PIN)
+  distance = getDistance(TRIGGER_PIN, ECHO_PIN);
   if (distance < 30) {
     stopMotors();
-    
+
     Serial.print("Obstacle Distance: ");
     Serial.print(distance);
     Serial.println(" cm");
 
-    delay(1000); // Delay a little bit to improve simulation performance
- 
+    delay(1000);  // Delay a little bit to improve simulation performance
+
     reverse();
     delay(1000);
-    
+
     turnLeft();
     delay(1000);
-  } else {
+  }
+  else {
     forward();
     delay(2000);
   }
@@ -54,7 +57,7 @@ void reverse() {
 
 void turnLeft() {
   digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW); // Left motors reverse
+  digitalWrite(IN2, LOW);  // Left motors reverse
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);  // Right motors forward
 }
@@ -63,7 +66,7 @@ void turnRight() {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);  // Left motors forward
   digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH); // Right motors reverse
+  digitalWrite(IN4, HIGH);  // Right motors reverse
 }
 
 void stopMotors() {
@@ -73,8 +76,7 @@ void stopMotors() {
   digitalWrite(IN4, LOW);
 }
 
-long getDistance(int triggerPin, int echoPin)
-{
+long getDistance(int triggerPin, int echoPin) {
   pinMode(triggerPin, OUTPUT);  // Clear the trigger
   digitalWrite(triggerPin, LOW);
   delayMicroseconds(2);
@@ -84,7 +86,7 @@ long getDistance(int triggerPin, int echoPin)
   delayMicroseconds(10);
   digitalWrite(triggerPin, LOW);
   pinMode(echoPin, INPUT);
-  
+
   // Reads the echo pin, and returns the sound wave travel time in microseconds to calculate distance
   long distance = 0.01723 * pulseIn(echoPin, HIGH);
 
