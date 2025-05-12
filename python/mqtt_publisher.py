@@ -2,10 +2,10 @@ import paho.mqtt.client as mqtt
 import ssl
 
 # HiveMQ Cloud details
-BROKER = "<HiveMQ MQTT BROKER HOST URL>"
-PORT = 8883
-USERNAME = "<HiveMQ USERID>"
-PASSWORD = "<HiveMQ PASSWORD>"
+BROKER = os.environ["MQTT_BROKER"]
+PORT = int(os.environ.get("MQTT_PORT", 8883))
+USERNAME = os.environ["MQTT_USERNAME"]
+PASSWORD = os.environ["MQTT_PASSWORD"]
 TOPIC = "car/command"
 
 # Create the client

@@ -2,10 +2,10 @@ import paho.mqtt.client as mqtt
 import ssl
 import json
 
-BROKER = "3bdf4e3470b14b238c91279bf1b4c47a.s1.eu.hivemq.cloud"
-PORT = 8883
-USERNAME = "admin01"
-PASSWORD = "hiveAdmin01"
+BROKER = os.environ["MQTT_BROKER"]
+PORT = int(os.environ.get("MQTT_PORT", 8883))
+USERNAME = os.environ["MQTT_USERNAME"]
+PASSWORD = os.environ["MQTT_PASSWORD"]
 CA_CERT = "../certs/hivemq-com-chain.pem"
 
 COMMAND_TOPIC = "car/command"

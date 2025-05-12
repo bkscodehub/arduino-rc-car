@@ -6,7 +6,7 @@ This project is an Internet-controlled 4WD RC car powered by an **Arduino Uno R4
 
 ## 🛠️ Features
 
-- Wireless car control using MQTT (`F`, `B`, `L`, `R`, `S`)
+- Wireless car control using MQTT (`Forward`, `Backward`, `Turn Left`, `Turn Right`, `Stop`, `Accelerate`, `Decelerate`)
 - Live distance telemetry using an ultrasonic sensor
 - Python-based command interface
 - Secure connection using TLS with HiveMQ Cloud
@@ -25,29 +25,16 @@ This project is an Internet-controlled 4WD RC car powered by an **Arduino Uno R4
 ---
 
 ## 📁 Project Structure
+
 ```
 arduino-rc-car/
 │   .gitignore
 ├───arduino
-│   └───sketches
-│       ├───arduino_car
-│       │       arduino_car.ino
-│       ├───car-test
-│       │       car-test.ino
-│       ├───esp8266-wifi-test
-│       │       esp8266-wifi-test.ino
-│       ├───esp8266_relay
-│       │       esp8266_relay.ino
-│       └───obstacle-detection
-│               obstacle-detection.ino
+│   └─── # Arduino and ESP sketches
 ├───certs
-│       hivemq-com-chain.pem
+│   └─── hivemq-com-chain.pem
 ├───python
-│       car_mqtt_client.py
-│       mqtt-client.py
-│       mqtt-sub.py
-│       mqtt_publisher.py
-│       mqtt_subscriber.py
+│   └─── # Python app
 ├── README.md
 └── LICENSE
 ```
@@ -56,20 +43,42 @@ arduino-rc-car/
 
 ## 🔐 MQTT Configuration
 
-- **Broker**: `3bdf4e3470b14b238c91279bf1b4c47a.s1.eu.hivemq.cloud`
+Configured as environment variables directly in the shell
+
+- **Broker**: `3bdf4...`
 - **Port**: `8883`
-- **Username/Password**: *(stored securely in `mqtt_controller.py`)*
+- **Username/Password**: _(HiveMQ cloud credentials)_
 - **Topics**:
   - `car/command` — commands from desktop to car
   - `car/telemetry` — sensor data from car to desktop
+
+### Linux/macOS:
+
+```
+export MQTT_BROKER=3bdf4...
+export MQTT_PORT=8883
+export MQTT_USERNAME=<<HiveMQ cloud user Id>>
+export MQTT_PASSWORD=<<HiveMQ cloud password>>
+```
+
+### Windows (Command Prompt):
+
+```
+set MQTT_BROKER=3bdf4...
+set MQTT_PORT=8883
+set MQTT_USERNAME=<<HiveMQ cloud user Id>>
+set MQTT_PASSWORD=<<HiveMQ cloud password>>
+```
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Flash the Arduino
+### 1. Flash the Arduino & ESP
 
-Upload the sketch from `arduino/car_control.ino` using Arduino IDE. Ensure `SoftwareSerial` is set correctly to receive from ESP8266.
+#### a) Upload the sketch from `arduino_car.ino` from `/arduino/sketches/` using Arduino IDE into the Arduino Uno R4 Minima board. Ensure `SoftwareSerial` is set correctly to receive from ESP8266.
+
+#### b) Upload the sketch from `esp8266_relay.ino` from `/arduino/sketches/` using Arduino IDE or an ESP Flasher into the ESP 01 8266 WiFi module.
 
 ### 2. Connect the Hardware
 
@@ -81,23 +90,21 @@ Upload the sketch from `arduino/car_control.ino` using Arduino IDE. Ensure `Soft
 ### 3. Install Python Dependencies
 
 ```bash
-pip install paho-mqtt
+pip install -r requirements.txt
 ```
 
-### 4. Run the Python Controller
+### 4. Run the Python Controller UI
 
 ```
 cd python
-python car_mqtt_client.py
+python car_mqtt_ui_client.py
 ```
 
-Then type a command:
-```
-Enter command (F/B/L/R/S): F
-```
+Use the buttons on the UI to navigate the RC car
 
 📡 Telemetry Example
 Every second, the car sends distance data:
+
 ```
 {"1": 25}
 ```
@@ -105,11 +112,13 @@ Every second, the car sends distance data:
 ---
 
 ## 📜 License
+
 This project is open-source and available under the GNU GENERAL PUBLIC LICENSE (Version 3, 29 June 2007).
 
 ---
 
 ## 🧠 Credits
+
 Developed as a DIY robotics + IoT integration project combining Arduino Uno R4 Minima, ESP 8266, HiveMQ MQTT Broker, and Python.
 
 ---
